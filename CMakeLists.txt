@@ -27,5 +27,28 @@ else()
         message(STATUS "No CUDA")
 endif()
 
-add_subdirectory(libs/wxWidgets)
-target_link_libraries(${EXEC} wx::net wx::core wx::base)
+include(FetchContent)
+
+#if(MSVC)
+  #FetchContent_Declare(
+    #nana
+    #GIT_REPOSITORY https://github.com/cnjinhao/nana.git
+    #GIT_TAG        develop-1.8
+  #)
+#else()
+FetchContent_Declare(
+    nana
+    GIT_REPOSITORY https://github.com/cnjinhao/nana.git
+    GIT_TAG        master
+)
+#endif()
+
+FetchContent_GetProperties(nana)
+if(NOT nana_POPULATED)
+  FetchContent_Populate(nana)
+  add_subdirectory(${nana_SOURCE_DIR} ${nana_BINARY_DIR})
+endif()
+
+target_link_libraries(${EXEC}
+	nana
+)
