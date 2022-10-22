@@ -24,13 +24,17 @@ private:
 };
 
 struct Point2D {
-    uint32_t x;
-    uint32_t y;
+    int x;
+    int y;
+};
+
+struct Line{
+    Point2D p1;
+    Point2D p2;
 };
 
 struct Wall {
-    Point2D start;
-    Point2D end;
+    Line line;
     double attenuation;
 };
 
@@ -40,4 +44,12 @@ struct Transmitter {
     double f_MHz;
 };
 
-void OSM(Grid& grid, const Transmitter& tx, int n, double scale = 1.0);
+struct SimResults{
+    Grid g;
+    double g_max;
+    double g_min;
+    double range;
+};
+
+void OSM(Grid& grid, const Transmitter tx, int n, double scale = 1.0);
+void MWM(Grid& grid, const Transmitter tx, std::vector<Wall> walls, int n, double scale = 1.0);
