@@ -28,7 +28,7 @@ __global__ void MWM_kernel(double *grid, int grid_w, int grid_h,
       }
     }
 
-    grid[x * grid_w +y] = tx.power_dbm - L;
+    grid[y * grid_w + x] = tx.power_dbm - L;
     // grid[x * grid_w + y] = blockIdx.x + blockIdx.y;
   }
 }

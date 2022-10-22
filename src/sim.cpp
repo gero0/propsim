@@ -20,7 +20,7 @@ double dbm_to_mw(double dbm)
 
 double Grid::get_val(uint32_t x, uint32_t y, PowerUnit unit) const
 {
-    uint32_t index = x * size_x + y;
+    uint32_t index = y * size_x + x;
     if (unit == PowerUnit::dBm)
         return data.at(index);
 
@@ -29,7 +29,7 @@ double Grid::get_val(uint32_t x, uint32_t y, PowerUnit unit) const
 
 void Grid::set_val(uint32_t x, uint32_t y, double val)
 {
-    uint32_t index = x * size_x + y;
+    uint32_t index = y * size_x + x;
     data.at(index) = val;
 }
 
