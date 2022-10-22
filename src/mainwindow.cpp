@@ -1,17 +1,17 @@
 #include "mainwindow.h"
 #include "sim.h"
 #include <memory>
+#include <qdebug.h>
 #include <qpainter.h>
 #include <qpixmap.h>
 
-#ifdef CUDA_AVAL
-#include "cudamatmul.h"
-#endif
+#include <chrono>
+using namespace std::chrono;
 
 void MainWindow::launch_sim(uint32_t x, uint32_t y)
 {
-    const int grid_w = 800;
-    const int grid_h = 800;
+    const int grid_w = 2000;
+    const int grid_h = 2000;
 
     if (x >= grid_w || y >= grid_h)
         return;
@@ -23,19 +23,42 @@ void MainWindow::launch_sim(uint32_t x, uint32_t y)
     std::vector<Wall> walls = std::vector<Wall> {
         { { { 100, 50 }, { 100, 700 } }, 6 },
         { { { 700, 50 }, { 700, 700 } }, 6 },
-        { { { 450, 50 }, { 450, 700 } }, 6 },
-        { { { 100, 50 }, { 700, 50 } }, 6 },
+        { { { 400, 50 }, { 400, 700 } }, 6 },
+        { { { 100, 50 }, { 400, 50 } }, 6 },
+        { { { 400, 50 }, { 700, 50 } }, 6 },
+        { { { 100, 150 }, { 700, 150 } }, 6 },
+        { { { 100, 300 }, { 700, 300 } }, 6 },
         { { { 100, 700 }, { 700, 700 } }, 6 },
         { { { 100, 400 }, { 700, 400 } }, 6 },
     };
 
-    MWM(*grid, tx, walls, 2);
+    auto start = high_resolution_clock::now();
+
+#ifdef CUDA_AVAL
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        MWM(*grid, tx, walls, 2);
+    } else {
+        MWM_CUDA(grid.get(), tx, walls, 2);
+    }
+
+#else
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        MWM(*grid, tx, walls, 2);
+    } else {
+        qDebug() << "CUDA is not supported in this system! Computing using CPU...";
+        MWM(*grid, tx, walls, 2);
+    }
+#endif
+
+    auto stop = high_resolution_clock::now();
 
     g_max = grid->get_max_val();
     g_min = grid->get_min_val();
     range = g_max - g_min;
 
-    QImage image (grid_w, grid_h, QImage::Format_RGB32);
+    QImage image(grid_w, grid_h, QImage::Format_RGB32);
+
+    auto draw_start = high_resolution_clock::now();
 
     for (int x = 0; x < grid_w; x++) {
         for (int y = 0; y < grid_h; y++) {
@@ -44,8 +67,10 @@ void MainWindow::launch_sim(uint32_t x, uint32_t y)
         }
     }
 
+    auto draw_stop = high_resolution_clock::now();
+
     pixmap = std::make_shared<QPixmap>(QPixmap::fromImage(image));
-    
+
     QPainter painter(pixmap.get());
     QPen green((QColor(0, 255, 0)), 1);
     painter.setPen(green);
@@ -55,6 +80,12 @@ void MainWindow::launch_sim(uint32_t x, uint32_t y)
     }
 
     image_label.setPixmap(*pixmap);
+
+    auto duration_draw = duration_cast<milliseconds>(draw_stop - draw_start);
+    auto duration = duration_cast<milliseconds>(stop - start);
+
+    qDebug() << "Simulation (ms): " << duration.count() << "\n"
+             << "Drawing (ms): " << duration_draw.count() << "\n";
 }
 
 MainWindow::MainWindow()
@@ -71,9 +102,6 @@ MainWindow::MainWindow()
     connect(&image_label, &ClickableLabel::displayGridClicked, this, &MainWindow::gridClicked);
 
     launch_sim();
-#ifdef CUDA_AVAL
-    cudaMul();
-#endif
 }
 
 void MainWindow::gridClicked(QMouseEvent* e) // Implementation of Slot which will consume signal
@@ -83,6 +111,4 @@ void MainWindow::gridClicked(QMouseEvent* e) // Implementation of Slot which wil
 
 MainWindow::~MainWindow()
 {
-    // delete pixmap;
-    // delete image_label;
 }

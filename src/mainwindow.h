@@ -6,7 +6,7 @@
 #include <qevent.h>
 #include <qpixmap.h>
 #include "sim.h"
-#include "clickableLabel.h"
+#include "qt/clickableLabel.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT

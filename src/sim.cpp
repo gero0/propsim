@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <iostream>
 
+bool intersects(Line l1, Line l2);
+
 Grid::Grid(uint32_t size_x, uint32_t size_y)
     : size_x(size_x)
     , size_y(size_y)
@@ -78,6 +80,37 @@ void OSM(Grid& grid, const Transmitter tx, int n, double scale)
 
             //add one slope coefficient
             L += 10 * n * log10(distance);
+
+            double val = tx.power_dbm - L;
+
+            grid.set_val(x, y, val);
+        }
+    }
+}
+
+void MWM(Grid& grid, const Transmitter tx, std::vector<Wall> walls, int n, double scale)
+{
+    for (int x = 0; x < grid.size_x; x++) {
+        for (int y = 0; y < grid.size_y; y++) {
+
+            double distance = std::sqrt(std::pow(x - tx.pos.x, 2) + std::pow(y - tx.pos.y, 2));
+
+            if (distance == 0) {
+                grid.set_val(x, y, tx.power_dbm);
+                continue;
+            }
+            //calculate L0 for 1m(free space attenuation)
+            double L = 20.0 * std::log10(1) + 20.0 * std::log10(tx.f_MHz) - 27.55;
+
+            //add one slope coefficient
+            L += 10 * n * log10(distance);
+
+            for (auto wall : walls) {
+                Line l { tx.pos.x, tx.pos.y, x, y };
+                if (intersects(l, wall.line)) {
+                    L += wall.attenuation;
+                }
+            }
 
             double val = tx.power_dbm - L;
 
@@ -169,33 +202,12 @@ bool intersects(Line l1, Line l2)
         return true;
 }
 
-void MWM(Grid& grid, const Transmitter tx, std::vector<Wall> walls, int n, double scale)
+#ifdef CUDA_AVAL
+
+#include "cuda/mwmkernel.h"
+
+void MWM_CUDA(Grid* grid, const Transmitter tx, std::vector<Wall> walls, int n, double scale)
 {
-    for (int x = 0; x < grid.size_x; x++) {
-        for (int y = 0; y < grid.size_y; y++) {
-
-            double distance = std::sqrt(std::pow(x - tx.pos.x, 2) + std::pow(y - tx.pos.y, 2));
-
-            if (distance == 0) {
-                grid.set_val(x, y, tx.power_dbm);
-                continue;
-            }
-            //calculate L0 for 1m(free space attenuation)
-            double L = 20.0 * std::log10(1) + 20.0 * std::log10(tx.f_MHz) - 27.55;
-
-            //add one slope coefficient
-            L += 10 * n * log10(distance);
-
-            for (auto wall : walls) {
-                Line l { tx.pos.x, tx.pos.y, x, y };
-                if (intersects(l, wall.line)) {
-                    L += wall.attenuation;
-                }
-            }
-
-            double val = tx.power_dbm - L;
-
-            grid.set_val(x, y, val);
-        }
-    }
+    MWM_CUDA_Wrapper(grid, tx, walls, n, scale);
 }
+#endif
