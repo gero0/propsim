@@ -1,6 +1,10 @@
 #include "clickableLabel.h"
 #include <qevent.h>
 
+ClickableLabel::ClickableLabel() : QLabel(){
+
+}
+
 ClickableLabel::ClickableLabel(QWidget* parent)
     : QLabel(parent)
 {

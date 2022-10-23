@@ -12,4 +12,5 @@ protected:
     bool event(QEvent* myEvent); // This method will give all kind of events on Label Widget
 public:
     ClickableLabel(QWidget* parent);
+    ClickableLabel();
 };
