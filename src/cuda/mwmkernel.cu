@@ -13,7 +13,7 @@ __global__ void MWM_kernel(double *grid, int grid_w, int grid_h,
   if (x < grid_w && y < grid_h) {
 
     double distance = sqrt(pow(x - tx.pos.x, 2) + pow(y - tx.pos.y, 2));
-    if (distance == 0) {
+    if (distance < 1) {
       grid[x * grid_w + y] = tx.power_dbm;
       return;
     }
@@ -29,11 +29,10 @@ __global__ void MWM_kernel(double *grid, int grid_w, int grid_h,
     }
 
     grid[y * grid_w + x] = tx.power_dbm - L;
-    // grid[x * grid_w + y] = blockIdx.x + blockIdx.y;
   }
 }
 
-void MWM_CUDA_Wrapper(Grid* grid, const Transmitter tx, std::vector<Wall> walls,
+void MWM_CUDA_Wrapper(Grid *grid, const Transmitter tx, std::vector<Wall> walls,
                       int n, double scale) {
   double *g;
   Wall *w;
@@ -57,7 +56,8 @@ void MWM_CUDA_Wrapper(Grid* grid, const Transmitter tx, std::vector<Wall> walls,
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(grid->data.data(), g, grid->data.size() * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(grid->data.data(), g, grid->data.size() * sizeof(double),
+             cudaMemcpyDeviceToHost);
 
   cudaFree(g);
   cudaFree(w);

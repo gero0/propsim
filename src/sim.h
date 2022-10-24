@@ -1,8 +1,8 @@
 #pragma once
 
+#include "helpers.h"
 #include <cstdint>
 #include <vector>
-#include "helpers.h"
 
 void OSM(Grid& grid, const Transmitter tx, int n, double scale = 1.0);
 void MWM(Grid& grid, const Transmitter tx, std::vector<Wall> walls, int n, double scale = 1.0);

@@ -1,15 +1,6 @@
 #include "mainwindow.h"
-#include "sim.h"
-#include <memory>
-#include <qdebug.h>
-#include <qnamespace.h>
-#include <qpainter.h>
-#include <qpixmap.h>
-
 #include <chrono>
-#include <qsize.h>
-#include <qsizepolicy.h>
-#include <vector>
+
 using namespace std::chrono;
 
 void MainWindow::launch_sim(uint32_t x, uint32_t y)
@@ -20,21 +11,10 @@ void MainWindow::launch_sim(uint32_t x, uint32_t y)
     if (x >= grid_w || y >= grid_h)
         return;
 
-    grid = std::make_shared<Grid>(grid_w, grid_h);
-    Transmitter tx { (int)x, (int)y, 25, 2400 };
+    tx.pos.x = x;
+    tx.pos.y = y;
 
-    // OSM(*grid, tx, 2);
-    std::vector<Wall> walls = std::vector<Wall> {
-        { { { 100, 50 }, { 100, 700 } }, 6 },
-        { { { 700, 50 }, { 700, 700 } }, 6 },
-        { { { 400, 50 }, { 400, 700 } }, 6 },
-        { { { 100, 50 }, { 400, 50 } }, 6 },
-        { { { 400, 50 }, { 700, 50 } }, 6 },
-        { { { 100, 150 }, { 700, 150 } }, 6 },
-        { { { 100, 300 }, { 700, 300 } }, 6 },
-        { { { 100, 700 }, { 700, 700 } }, 6 },
-        { { { 100, 400 }, { 700, 400 } }, 6 },
-    };
+    grid = std::make_shared<Grid>(grid_w, grid_h);
 
     auto start = high_resolution_clock::now();
 
@@ -62,7 +42,7 @@ void MainWindow::launch_sim(uint32_t x, uint32_t y)
 
     auto draw_start = high_resolution_clock::now();
 
-    draw_grid(walls);
+    draw_grid();
 
     auto draw_stop = high_resolution_clock::now();
 
@@ -79,19 +59,82 @@ MainWindow::MainWindow()
     pixmap = std::make_shared<QPixmap>(100, 100);
     pixmap->fill(QColor::fromRgb(0, 255, 255));
 
-    image_label.setPixmap(*pixmap);
-    image_label.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    image_label.setScaledContents(true);
+    layout = new QHBoxLayout();
+    image_label = new ClickableLabel();
+    img_scroll = new QScrollArea();
 
-    img_scroll.setBackgroundRole(QPalette::Dark);
-    img_scroll.setWidget(&image_label);
-    img_scroll.setVisible(true);
+    menu_layout = new QVBoxLayout(&menu_widget);
+    data_label = new QLabel(&menu_widget);
+    sim_radio = new QRadioButton("Place TX on point", &menu_widget);
+    point_radio = new QRadioButton("Get data from point", &menu_widget);
+    button = new QPushButton("TEST", &menu_widget);
 
-    setCentralWidget(&img_scroll);
+    sim_radio->setChecked(true);
+    point_radio->setChecked(false);
 
-    connect(&image_label, &ClickableLabel::displayGridClicked, this, &MainWindow::gridClicked);
+    image_label->setPixmap(*pixmap);
+    image_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    image_label->setScaledContents(true);
+
+    img_scroll->setBackgroundRole(QPalette::Dark);
+    img_scroll->setWidget(image_label);
+    img_scroll->setVisible(true);
+
+    menu_layout->addWidget(data_label);
+    menu_layout->addWidget(sim_radio);
+    menu_layout->addWidget(point_radio);
+    menu_layout->addWidget(button);
+    menu_widget.setLayout(menu_layout);
+    menu_widget.setStyleSheet("background-color:grey;");
+
+    QSizePolicy spLeft(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    spLeft.setHorizontalStretch(3);
+    QSizePolicy spRight(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    spRight.setHorizontalStretch(1);
+
+    img_scroll->setSizePolicy(spLeft);
+    img_scroll->setMinimumSize(400, 400);
+    layout->addWidget(img_scroll);
+
+    menu_widget.setSizePolicy(spRight);
+    layout->addWidget(&menu_widget);
+
+    central_widget.setLayout(layout);
+    setCentralWidget(&central_widget);
+
+    connect(image_label, &ClickableLabel::displayGridClicked, this, &MainWindow::gridClicked);
+    connect(sim_radio, &QRadioButton::toggled, this, &MainWindow::simToggled);
+    connect(point_radio, &QRadioButton::toggled, this, &MainWindow::pointToggled);
+
+    walls = std::vector<Wall> {
+        { { { 100, 50 }, { 100, 700 } }, 6 },
+        { { { 700, 50 }, { 700, 700 } }, 6 },
+        { { { 400, 50 }, { 400, 700 } }, 6 },
+        { { { 100, 50 }, { 400, 50 } }, 6 },
+        { { { 400, 50 }, { 700, 50 } }, 6 },
+        { { { 100, 150 }, { 700, 150 } }, 6 },
+        { { { 100, 300 }, { 700, 300 } }, 6 },
+        { { { 100, 700 }, { 700, 700 } }, 6 },
+        { { { 100, 400 }, { 700, 400 } }, 6 },
+    };
 
     launch_sim();
+    update_data_label();
+}
+
+void MainWindow::update_data_label()
+{
+    std::ostringstream out;
+    out << "Transmitter position: (" << tx.pos.x << "," << tx.pos.y << ")"
+        << "\n"
+        << "Power: " << tx.power_dbm << "dBm"
+        << "\n"
+        << "Value at point (" << selected_point.x << "," << selected_point.x << "): "
+        << grid->get_val(selected_point.x, selected_point.y)
+        << "dBm \n("
+        << (grid->get_val(selected_point.x, selected_point.y, PowerUnit::mW)) << "mW)";
+
+    data_label->setText(QString::fromStdString(out.str()));
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -107,7 +150,35 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
 }
 
-void MainWindow::draw_grid(const std::vector<Wall>& walls)
+void MainWindow::simToggled(bool checked)
+{
+    if (checked) {
+        point_radio->setChecked(false);
+        point_mode = false;
+    }
+}
+
+void MainWindow::pointToggled(bool checked)
+{
+    if (checked) {
+        sim_radio->setChecked(false);
+        point_mode = true;
+    }
+}
+
+void MainWindow::gridClicked(QMouseEvent* e) // Implementation of Slot which will consume signal
+{
+    if (point_mode) {
+        selected_point = Point2D { (int)(e->pos().x() / scale_factor), (int)(e->pos().y() / scale_factor) };
+        draw_grid();
+    } else {
+        launch_sim(e->pos().x() / scale_factor, e->pos().y() / scale_factor);
+    }
+
+    update_data_label();
+}
+
+void MainWindow::draw_grid()
 {
     QImage image(grid->size_x, grid->size_y, QImage::Format_RGB32);
 
@@ -128,16 +199,14 @@ void MainWindow::draw_grid(const std::vector<Wall>& walls)
         painter.drawLine(wall.line.p1.x, wall.line.p1.y, wall.line.p2.x, wall.line.p2.y);
     }
 
-    image_label.setPixmap(*pixmap);
+    painter.drawLine(selected_point.x - 3, selected_point.y - 3, selected_point.x + 3, selected_point.y + 3);
+    painter.drawLine(selected_point.x + 3, selected_point.y - 3, selected_point.x - 3, selected_point.y + 3);
+
+    image_label->setPixmap(*pixmap);
     double scale = scale_factor;
 
     normalSize();
     scaleImage(scale);
-}
-
-void MainWindow::gridClicked(QMouseEvent* e) // Implementation of Slot which will consume signal
-{
-    launch_sim(e->pos().x() / scale_factor, e->pos().y() / scale_factor);
 }
 
 void MainWindow::zoomIn()
@@ -152,23 +221,14 @@ void MainWindow::zoomOut()
 
 void MainWindow::normalSize()
 {
-    image_label.adjustSize();
+    image_label->adjustSize();
     scale_factor = 1.0;
 }
 
 void MainWindow::scaleImage(double factor)
 {
     scale_factor *= factor;
-    image_label.resize(scale_factor * image_label.pixmap(Qt::ReturnByValue).size());
-
-    adjustScrollBar(img_scroll.horizontalScrollBar(), factor);
-    adjustScrollBar(img_scroll.verticalScrollBar(), factor);
-}
-
-void MainWindow::adjustScrollBar(QScrollBar* scrollBar, double factor)
-{
-    scrollBar->setValue(int(factor * scrollBar->value()
-        + ((factor - 1) * scrollBar->pageStep() / 2)));
+    image_label->resize(scale_factor * image_label->pixmap(Qt::ReturnByValue).size());
 }
 
 MainWindow::~MainWindow()

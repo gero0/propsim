@@ -1,8 +1,9 @@
 #include "clickableLabel.h"
 #include <qevent.h>
 
-ClickableLabel::ClickableLabel() : QLabel(){
-
+ClickableLabel::ClickableLabel()
+    : QLabel()
+{
 }
 
 ClickableLabel::ClickableLabel(QWidget* parent)
@@ -16,7 +17,7 @@ bool ClickableLabel::event(QEvent* myEvent)
     case (QEvent ::MouseButtonRelease): // Identify Mouse press Event
     {
         //qDebug() << "Got Mouse Event";
-        emit displayGridClicked((QMouseEvent*) myEvent);
+        emit displayGridClicked((QMouseEvent*)myEvent);
         break;
     }
     }
