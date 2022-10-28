@@ -3,6 +3,16 @@
 
 using namespace std::chrono;
 
+//TODO:
+// - Windows support
+// - Grid size input
+// - Wall input (file or gui?)
+// - simulation scale (unit per grid square)
+// - presentation - color palette
+// - presentation - GPU render
+// - runtime CUDA check and error handling
+// - another model if we're really bored or sth
+
 void MainWindow::launch_sim(uint32_t x, uint32_t y)
 {
     const int grid_w = 1000;
