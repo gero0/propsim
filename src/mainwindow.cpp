@@ -85,7 +85,6 @@ MainWindow::MainWindow()
     menu_layout->addWidget(point_radio);
     menu_layout->addWidget(button);
     menu_widget.setLayout(menu_layout);
-    menu_widget.setStyleSheet("background-color:grey;");
 
     QSizePolicy spLeft(QSizePolicy::Preferred, QSizePolicy::Preferred);
     spLeft.setHorizontalStretch(3);
