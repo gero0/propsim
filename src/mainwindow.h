@@ -14,6 +14,8 @@ public slots:
     void gridClicked(QMouseEvent* e);
     void simToggled(bool checked);
     void pointToggled(bool checked);
+    void deleteWall();
+    void addWall();
 
 public:
     MainWindow();
@@ -30,10 +32,35 @@ private:
     QLabel* data_label;
     QRadioButton* sim_radio;
     QRadioButton* point_radio;
-    QPushButton* button;
+    QListWidget* wall_list;
+    QPushButton* delete_wall_btn;
+    QPushButton* run_sim_btn;
+
+    QWidget* wall_edit_widget;
+    QGridLayout* wall_edit_layout;
+    QLabel* wx1l;
+    QLabel* wy1l;
+    QLabel* wx2l;
+    QLabel* wy2l;
+    QLabel* wLl;
+    QPushButton* add_wall_btn;
+
+    QWidget* tx_edit_widget;
+    QGridLayout* tx_edit_layout;
+    QLineEdit* wx1;
+    QLineEdit* wy1;
+    QLineEdit* wx2;
+    QLineEdit* wy2;
+    QLineEdit* wL;
+
+    QLabel* txLabel;
+    QLabel* txfl;
+    QLabel* txpl;
+    QLineEdit* txf;
+    QLineEdit* txp;
 
     Point2D selected_point { 0, 0 };
-    Transmitter tx { 0, 0, 23, 2400 };
+    Transmitter tx { 0, 0, 20, 2400 };
 
     std::shared_ptr<Grid> grid;
     std::shared_ptr<QPixmap> pixmap;
@@ -46,7 +73,7 @@ private:
 
     float scale_factor = 1.0;
 
-    void launch_sim(uint32_t x = 0, uint32_t y = 0);
+    void launch_sim();
     void draw_grid();
     void update_data_label();
 
@@ -56,4 +83,6 @@ private:
     void scaleImage(double factor);
 
     void keyPressEvent(QKeyEvent* event);
+
+    std::string wallFormat(Wall wall);
 };
