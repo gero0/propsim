@@ -5,13 +5,6 @@
 
 using namespace std::chrono;
 
-//TODO:
-// - Windows support
-// - Grid size input
-// - simulation scale (unit per grid square)
-// - presentation - color palette
-// - presentation - GPU render
-// - runtime CUDA check and error handling
 
 void MainWindow::launch_sim()
 {
