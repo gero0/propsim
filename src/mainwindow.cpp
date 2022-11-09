@@ -2,6 +2,7 @@
 #include <chrono>
 #include <exception>
 #include <string>
+#include <sstream>
 
 using namespace std::chrono;
 
