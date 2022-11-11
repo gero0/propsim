@@ -1,5 +1,4 @@
 //TODO:
-// - Grid size input
 // - presentation - color palette
 // - presentation - GPU render
 // - runtime CUDA check and error handling

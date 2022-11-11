@@ -6,7 +6,6 @@
 
 #include <QtWidgets>
 #include <memory>
-#include <qlineedit.h>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -29,6 +28,15 @@ private:
     QScrollArea* img_scroll;
 
     QWidget menu_widget { this };
+
+    QWidget* grid_edit_widget;
+    QGridLayout* grid_edit_layout;
+    QLabel* grid_w_label;
+    QLineEdit* grid_w_input;
+    QLabel* grid_h_label;
+    QLineEdit* grid_h_input;
+    QPushButton* set_grid_btn;
+
     QVBoxLayout* menu_layout;
     QLabel* scale_label;
     QLineEdit* scale_input;
@@ -75,6 +83,8 @@ private:
     bool point_mode = false;
 
     float scale_factor = 1.0;
+    int grid_w = 1000;
+    int grid_h = 1000;
 
     void launch_sim();
     void draw_grid();
@@ -84,6 +94,7 @@ private:
     void zoomOut();
     void normalSize();
     void scaleImage(double factor);
+    void setGrid();
 
     void keyPressEvent(QKeyEvent* event);
 

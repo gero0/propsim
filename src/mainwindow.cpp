@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include <chrono>
 #include <exception>
+#include <memory>
+#include <qdebug.h>
 #include <string>
 #include <sstream>
 
@@ -9,9 +11,6 @@ using namespace std::chrono;
 
 void MainWindow::launch_sim()
 {
-    const int grid_w = 1000;
-    const int grid_h = 1000;
-
     grid = std::make_shared<Grid>(grid_w, grid_h);
 
     auto start = high_resolution_clock::now();
@@ -90,6 +89,15 @@ MainWindow::MainWindow()
     delete_wall_btn = new QPushButton("Delete wall", &menu_widget);
     run_sim_btn = new QPushButton("Run simulation", &menu_widget);
 
+    grid_edit_widget = new QWidget(&menu_widget);
+    grid_edit_layout = new QGridLayout(grid_edit_widget);
+    grid_w_label = new QLabel("Grid W", grid_edit_widget);
+    grid_h_label = new QLabel("Grid H", grid_edit_widget);
+    grid_w_input = new QLineEdit("1000", grid_edit_widget);
+    grid_h_input = new QLineEdit("1000", grid_edit_widget);
+
+    set_grid_btn = new QPushButton("Resize grid", &menu_widget);
+
     wall_edit_widget = new QWidget(&menu_widget);
     wall_edit_layout = new QGridLayout(wall_edit_widget);
     wx1l = new QLabel("x1:", wall_edit_widget);
@@ -116,6 +124,13 @@ MainWindow::MainWindow()
 
     txf->setText(QString::number(2400));
     txp->setText(QString::number(20));
+
+    //Grid edit section
+    grid_edit_layout->addWidget(grid_w_label, 0, 0);
+    grid_edit_layout->addWidget(grid_w_input, 0, 1);
+    grid_edit_layout->addWidget(grid_h_label, 0, 2);
+    grid_edit_layout->addWidget(grid_h_input, 0, 3);
+    grid_edit_widget->setLayout(grid_edit_layout);
 
     //Wall editor section
     wall_edit_layout->addWidget(wx1l, 0, 0);
@@ -157,6 +172,8 @@ MainWindow::MainWindow()
     img_scroll->setVisible(true);
 
     //laying out the right part of the window
+    menu_layout->addWidget(grid_edit_widget);
+    menu_layout->addWidget(set_grid_btn);
     menu_layout->addWidget(scale_label);
     menu_layout->addWidget(scale_input);
     menu_layout->addWidget(data_label);
@@ -192,6 +209,7 @@ MainWindow::MainWindow()
     connect(delete_wall_btn, &QPushButton::clicked, this, &MainWindow::deleteWall);
     connect(add_wall_btn, &QPushButton::clicked, this, &MainWindow::addWall);
     connect(run_sim_btn, &QPushButton::clicked, this, &MainWindow::launch_sim);
+    connect(set_grid_btn, &QPushButton::clicked, this, &MainWindow::setGrid);
 
     walls = std::vector<Wall> {
         { { { 100, 50 }, { 100, 700 } }, 6 },
@@ -219,6 +237,20 @@ std::string MainWindow::wallFormat(Wall wall)
     out << "(" << wall.line.p1.x << "," << wall.line.p1.y << ") - "
         << "(" << wall.line.p2.x << "," << wall.line.p2.y << ") L: " << wall.attenuation << " dB";
     return out.str();
+}
+
+void MainWindow::setGrid(){
+    try{
+        grid_w = std::stoi(grid_w_input->text().toStdString());
+        grid_h = std::stoi(grid_h_input->text().toStdString());
+    }catch(std::exception& e){
+        qDebug() << "Could not set grid size, using default size 1000x1000";
+        grid_w = 1000;
+        grid_h = 1000;
+    }
+
+    grid = std::make_shared<Grid>(grid_w, grid_h);
+    launch_sim();
 }
 
 void MainWindow::update_data_label()
