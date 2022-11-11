@@ -18,6 +18,12 @@ void MainWindow::launch_sim()
 
     tx.f_MHz = 2400;
     tx.power_dbm = 20;
+    float sim_scale = 0.1;
+    try{
+        sim_scale = std::stof(scale_input->text().toStdString());
+    } catch(std::exception& e){
+        qDebug() << "Could not set scale, using default value: 0.1";
+    }
 
     try {
         tx.f_MHz = std::stoi(txf->text().toStdString());
@@ -28,17 +34,17 @@ void MainWindow::launch_sim()
 
 #ifdef CUDA_AVAL
     if (QCoreApplication::arguments().contains("--cpu")) {
-        MWM(*grid, tx, walls, 2);
+        MWM(*grid, tx, walls, 2, sim_scale);
     } else {
-        MWM_CUDA(grid.get(), tx, walls, 2);
+        MWM_CUDA(grid.get(), tx, walls, 2, sim_scale);
     }
 
 #else
     if (QCoreApplication::arguments().contains("--cpu")) {
-        MWM(*grid, tx, walls, 2);
+        MWM(*grid, tx, walls, 2, sim_scale);
     } else {
         qDebug() << "CUDA is not supported in this system! Computing using CPU...";
-        MWM(*grid, tx, walls, 2);
+        MWM(*grid, tx, walls, 2, sim_scale);
     }
 #endif
 
@@ -75,6 +81,8 @@ MainWindow::MainWindow()
     img_scroll = new QScrollArea();
 
     menu_layout = new QVBoxLayout(&menu_widget);
+    scale_label = new QLabel("Scale: ( 1 point = x m)",&menu_widget);
+    scale_input = new QLineEdit("0.1", &menu_widget);
     data_label = new QLabel(&menu_widget);
     sim_radio = new QRadioButton("Place TX on point", &menu_widget);
     point_radio = new QRadioButton("Get data from point", &menu_widget);
@@ -149,6 +157,8 @@ MainWindow::MainWindow()
     img_scroll->setVisible(true);
 
     //laying out the right part of the window
+    menu_layout->addWidget(scale_label);
+    menu_layout->addWidget(scale_input);
     menu_layout->addWidget(data_label);
     menu_layout->addWidget(sim_radio);
     menu_layout->addWidget(point_radio);

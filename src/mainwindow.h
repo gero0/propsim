@@ -6,6 +6,7 @@
 
 #include <QtWidgets>
 #include <memory>
+#include <qlineedit.h>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -29,6 +30,8 @@ private:
 
     QWidget menu_widget { this };
     QVBoxLayout* menu_layout;
+    QLabel* scale_label;
+    QLineEdit* scale_input;
     QLabel* data_label;
     QRadioButton* sim_radio;
     QRadioButton* point_radio;

@@ -13,12 +13,14 @@ void OSM(Grid& grid, const Transmitter tx, int n, double scale)
 
             double distance = std::sqrt(std::pow(x - tx.pos.x, 2) + std::pow(y - tx.pos.y, 2));
 
+            distance *= scale;
+
             if (distance == 0) {
                 grid.set_val(x, y, tx.power_dbm);
                 continue;
             }
             //calculate L0 for 1m(free space attenuation)
-            double L = 20.0 * std::log10(1) + 20.0 * std::log10(tx.f_MHz) - 27.55;
+            double L = 20.0 * std::log10(1 * scale) + 20.0 * std::log10(tx.f_MHz) - 27.55;
 
             //add one slope coefficient
             L += 10 * n * log10(distance);
@@ -41,8 +43,11 @@ void MWM(Grid& grid, const Transmitter tx, std::vector<Wall> walls, int n, doubl
                 grid.set_val(x, y, tx.power_dbm);
                 continue;
             }
+
+            distance *= scale;
+
             //calculate L0 for 1m(free space attenuation)
-            double L = 20.0 * std::log10(1) + 20.0 * std::log10(tx.f_MHz) - 27.55;
+            double L = 20.0 * std::log10(1 * scale) + 20.0 * std::log10(tx.f_MHz) - 27.55;
 
             //add one slope coefficient
             L += 10 * n * log10(distance);

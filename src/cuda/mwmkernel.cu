@@ -18,7 +18,9 @@ __global__ void MWM_kernel(double *grid, int grid_w, int grid_h,
       return;
     }
 
-    double L = 20.0 * log10f(1) + 20.0 * log10f(tx.f_MHz) - 27.55;
+    distance *= scale;
+
+    double L = 20.0 * log10f(1 * scale) + 20.0 * log10f(tx.f_MHz) - 27.55;
     L += 10 * n * log10f(distance);
 
     for (int i = 0; i < wall_count; i++) {
