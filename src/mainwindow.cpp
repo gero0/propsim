@@ -56,21 +56,22 @@ void MainWindow::launch_sim()
     auto draw_start = high_resolution_clock::now();
 
 
-#ifdef CUDA_AVAL
-    if (QCoreApplication::arguments().contains("--cpu")) {
-        draw_grid();
-    } else {
-        //draw_grid_CUDA(); //to implement
-        draw_grid(); //temporary override, to be deleted
-    }
-#else 
-    if (QCoreApplication::arguments().contains("--cpu")) {
-        draw_grid();
-    } else {
-        qDebug() << "CUDA is not supported in this system! Drawing using CPU...";
-        draw_grid();
-    }
-#endif
+//#ifdef CUDA_AVAL
+//    if (QCoreApplication::arguments().contains("--cpu")) {
+//        draw_grid();
+//    } else {
+//        //draw_grid_CUDA(); //to implement
+//        draw_grid(); //temporary override, to be deleted
+//    }
+//#else 
+//    if (QCoreApplication::arguments().contains("--cpu")) {
+//        draw_grid();
+//    } else {
+//        qDebug() << "CUDA is not supported in this system! Drawing using CPU...";
+//        draw_grid();
+//    }
+//#endif
+    draw_grid();
 
     auto draw_stop = high_resolution_clock::now();
 
@@ -360,14 +361,21 @@ void MainWindow::draw_grid()
 {
     QImage image(grid->size_x, grid->size_y, QImage::Format_RGB32);
 
-    for (int x = 0; x < grid->size_x; x++) {
-        for (int y = 0; y < grid->size_y; y++) {
-            //const int r_val = (((grid->get_val(x, y) - g_min) * 255) / range);
-            //image.setPixelColor(x, y, QColor::fromRgb(r_val, r_val, r_val));
-            const int hue = (((grid->get_val(x, y) - g_min) * 120) / range);
-            image.setPixelColor(x, y, QColor::fromHsv(hue, 255, 192, 200));
-        }
+#ifdef CUDA_AVAL
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        color_grid(image);
+    } else {
+        //paralellize this
+        color_grid(image);
     }
+#else
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        color_grid(image);
+    } else {
+        qDebug() << "CUDA is not supported in this system! Drawing using CPU...";
+        color_grid(image);
+    }
+#endif
 
     pixmap = std::make_shared<QPixmap>(QPixmap::fromImage(image));
 
@@ -387,6 +395,17 @@ void MainWindow::draw_grid()
 
     normalSize();
     scaleImage(scale);
+}
+
+void MainWindow::color_grid(QImage& image) {
+    for (int x = 0; x < grid->size_x; x++) {
+        for (int y = 0; y < grid->size_y; y++) {
+            //const int r_val = (((grid->get_val(x, y) - g_min) * 255) / range);
+            //image.setPixelColor(x, y, QColor::fromRgb(r_val, r_val, r_val));
+            const int hue = (((grid->get_val(x, y) - g_min) * 120) / range);
+            image.setPixelColor(x, y, QColor::fromHsv(hue, 255, 192, 200));
+        }
+    }
 }
 
 void MainWindow::zoomIn()
