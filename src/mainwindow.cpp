@@ -18,9 +18,9 @@ void MainWindow::launch_sim()
     tx.f_MHz = 2400;
     tx.power_dbm = 20;
     float sim_scale = 0.1;
-    try{
+    try {
         sim_scale = std::stof(scale_input->text().toStdString());
-    } catch(std::exception& e){
+    } catch (std::exception& e) {
         qDebug() << "Could not set scale, using default value: 0.1";
     }
 
@@ -55,7 +55,22 @@ void MainWindow::launch_sim()
 
     auto draw_start = high_resolution_clock::now();
 
-    draw_grid();
+
+#ifdef CUDA_AVAL
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        draw_grid();
+    } else {
+        //draw_grid_CUDA(); //to implement
+        draw_grid(); //temporary override, to be deleted
+    }
+#else 
+    if (QCoreApplication::arguments().contains("--cpu")) {
+        draw_grid();
+    } else {
+        qDebug() << "CUDA is not supported in this system! Drawing using CPU...";
+        draw_grid();
+    }
+#endif
 
     auto draw_stop = high_resolution_clock::now();
 
@@ -63,7 +78,7 @@ void MainWindow::launch_sim()
     auto duration = duration_cast<milliseconds>(stop - start);
 
     qDebug() << "Simulation (ms): " << duration.count() << "\n"
-             << "Drawing (ms): " << duration_draw.count() << "\n";
+        << "Drawing (ms): " << duration_draw.count() << "\n";
 
     update_data_label();
 }
@@ -80,7 +95,7 @@ MainWindow::MainWindow()
     img_scroll = new QScrollArea();
 
     menu_layout = new QVBoxLayout(&menu_widget);
-    scale_label = new QLabel("Scale: ( 1 point = x m)",&menu_widget);
+    scale_label = new QLabel("Scale: ( 1 point = x m)", &menu_widget);
     scale_input = new QLineEdit("0.1", &menu_widget);
     data_label = new QLabel(&menu_widget);
     sim_radio = new QRadioButton("Place TX on point", &menu_widget);
@@ -211,7 +226,7 @@ MainWindow::MainWindow()
     connect(run_sim_btn, &QPushButton::clicked, this, &MainWindow::launch_sim);
     connect(set_grid_btn, &QPushButton::clicked, this, &MainWindow::setGrid);
 
-    walls = std::vector<Wall> {
+    walls = std::vector<Wall>{
         { { { 100, 50 }, { 100, 700 } }, 6 },
         { { { 700, 50 }, { 700, 700 } }, 6 },
         { { { 400, 50 }, { 400, 700 } }, 6 },
@@ -239,11 +254,11 @@ std::string MainWindow::wallFormat(Wall wall)
     return out.str();
 }
 
-void MainWindow::setGrid(){
-    try{
+void MainWindow::setGrid() {
+    try {
         grid_w = std::stoi(grid_w_input->text().toStdString());
         grid_h = std::stoi(grid_h_input->text().toStdString());
-    }catch(std::exception& e){
+    } catch (std::exception& e) {
         qDebug() << "Could not set grid size, using default size 1000x1000";
         grid_w = 1000;
         grid_h = 1000;
@@ -302,12 +317,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     qDebug("Screen keyPressEvent %d", event->key());
     switch (event->key()) {
-    case Qt::Key_Plus:
-        zoomIn();
-        break;
-    case Qt::Key_Minus:
-        zoomOut();
-        break;
+        case Qt::Key_Plus:
+            zoomIn();
+            break;
+        case Qt::Key_Minus:
+            zoomOut();
+            break;
     }
 }
 
@@ -330,7 +345,7 @@ void MainWindow::pointToggled(bool checked)
 void MainWindow::gridClicked(QMouseEvent* e) // Implementation of Slot which will consume signal
 {
     if (point_mode) {
-        selected_point = Point2D { (int)(e->pos().x() / scale_factor), (int)(e->pos().y() / scale_factor) };
+        selected_point = Point2D{ (int)(e->pos().x() / scale_factor), (int)(e->pos().y() / scale_factor) };
         draw_grid();
     } else {
         tx.pos.x = e->pos().x() / scale_factor;
@@ -347,8 +362,10 @@ void MainWindow::draw_grid()
 
     for (int x = 0; x < grid->size_x; x++) {
         for (int y = 0; y < grid->size_y; y++) {
-            const int r_val = (((grid->get_val(x, y) - g_min) * 255) / range);
-            image.setPixelColor(x, y, QColor::fromRgb(r_val, r_val, r_val));
+            //const int r_val = (((grid->get_val(x, y) - g_min) * 255) / range);
+            //image.setPixelColor(x, y, QColor::fromRgb(r_val, r_val, r_val));
+            const int hue = (((grid->get_val(x, y) - g_min) * 120) / range);
+            image.setPixelColor(x, y, QColor::fromHsv(hue, 255, 192, 200));
         }
     }
 
