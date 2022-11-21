@@ -90,6 +90,7 @@ private:
     void draw_grid();
     void color_grid(QImage& image);
     void color_grid_raw(QImage& image);
+    void color_grid_raw_cuda(QImage& image);
     void update_data_label();
 
     void zoomIn();

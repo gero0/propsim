@@ -6,6 +6,11 @@
 #include <string>
 #include <sstream>
 
+#ifdef  CUDA_AVAL
+#include "cuda/gridkernel.h"
+#endif //  CUDA_AVAL
+
+
 using namespace std::chrono;
 
 
@@ -365,8 +370,7 @@ void MainWindow::draw_grid()
     if (QCoreApplication::arguments().contains("--cpu")) {
         color_grid_raw(image);
     } else {
-        //paralellize this
-        color_grid_raw(image);
+        color_grid_raw_cuda(image);// , image);
     }
 #else
     if (QCoreApplication::arguments().contains("--cpu")) {
@@ -410,7 +414,6 @@ void MainWindow::color_grid(QImage& image) {
 
 void MainWindow::color_grid_raw(QImage& image) {
     QRgb* raw_image = new QRgb[grid->size_x * grid->size_y];
-	auto tStart = std::chrono::high_resolution_clock::now();
     for (int x = 0; x < grid->size_x; x++) {
         for (int y = 0; y < grid->size_y; y++) {
             const int hue = (((grid->get_val(x, y) - g_min) * 120) / range);
@@ -425,17 +428,23 @@ void MainWindow::color_grid_raw(QImage& image) {
             raw_image[x + y * grid->size_x] = qRgba(rgba[0], rgba[1], rgba[2], rgba[3]);
         }
     }
-	auto tEnd = std::chrono::high_resolution_clock::now();
-	qDebug() << "Time to calculate hues: " << std::chrono::duration<double, std::milli>(tEnd - tStart).count() << "ms";
-	tStart = std::chrono::high_resolution_clock::now();
     for (int x = 0; x < grid->size_x; x++) {
         for (int y = 0; y < grid->size_y; y++) {
             image.setPixel(x, y, raw_image[x + y * grid->size_x]);
         }
     }
-	tEnd = std::chrono::high_resolution_clock::now();
-	qDebug() << "Time to set pixels: " << std::chrono::duration<double, std::milli>(tEnd - tStart).count() << "ms";
 	delete[] raw_image;
+}
+
+void MainWindow::color_grid_raw_cuda(QImage& image) {
+    unsigned int* raw_image = new QRgb[grid->data.size()];
+    grid_CUDA_Wrapper(grid.get(), raw_image);
+    for (int x = 0; x < grid->size_x; x++) {
+        for (int y = 0; y < grid->size_y; y++) {
+            image.setPixel(x, y, raw_image[x + y * grid->size_x]);
+        }
+    }
+    delete[] raw_image;
 }
 
 void MainWindow::zoomIn()
