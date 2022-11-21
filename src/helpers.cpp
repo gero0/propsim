@@ -60,3 +60,46 @@ double Grid::get_min_val(PowerUnit unit)
 
     return dbm_to_mw(data.at(*it));
 }
+
+
+void hsva_to_rgba(double hsva[4], double rgba[4]) {
+    static const double PI = 3.14159265358979323846;
+    double h = hsva[0];
+    double s = hsva[1] / 255.0;
+    double v = hsva[2] / 255.0;
+    double a = hsva[3];
+    double c = v * s;
+    double x = c * (1 - abs(fmod(h / 60.0, 2) - 1));
+    double m = v - c;
+    double r, g, b;
+	if (h < 60) {
+		r = c;
+		g = x;
+		b = 0;
+	} else if (h < 120) {
+		r = x;
+		g = c;
+		b = 0;
+	} else if (h < 180) {
+		r = 0;
+		g = c;
+		b = x;
+	} else if (h < 240) {
+		r = 0;
+		g = x;
+		b = c;
+			    
+	} else if (h < 300) {
+		r = x;
+		g = 0;
+		b = c;
+	} else {
+		r = c;
+		g = 0;
+		b = x;
+	}
+    rgba[0] = (r + m) * 255.0;
+    rgba[1] = (g + m) * 255.0;
+    rgba[2] = (b + m) * 255.0;
+    rgba[3] = a;
+}
