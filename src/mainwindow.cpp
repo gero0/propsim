@@ -368,7 +368,7 @@ void MainWindow::draw_grid()
 
 #ifdef CUDA_AVAL
     if (QCoreApplication::arguments().contains("--cpu")) {
-        color_grid_raw(image);
+        color_grid(image);
     } else {
         color_grid_raw_cuda(image);// , image);
     }
