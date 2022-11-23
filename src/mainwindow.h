@@ -90,7 +90,9 @@ private:
     void draw_grid();
     void color_grid(QImage& image);
     void color_grid_raw(QImage& image);
+    #ifdef CUDA_AVAL
     void color_grid_raw_cuda(QImage& image);
+    #endif
     void update_data_label();
 
     void zoomIn();

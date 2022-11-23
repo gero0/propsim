@@ -435,7 +435,7 @@ void MainWindow::color_grid_raw(QImage& image) {
     }
 	delete[] raw_image;
 }
-
+#ifdef CUDA_AVAL
 void MainWindow::color_grid_raw_cuda(QImage& image) {
     unsigned int* raw_image = new QRgb[grid->data.size()];
     grid_CUDA_Wrapper(grid.get(), raw_image);
@@ -446,7 +446,7 @@ void MainWindow::color_grid_raw_cuda(QImage& image) {
     }
     delete[] raw_image;
 }
-
+#endif
 void MainWindow::zoomIn()
 {
     scaleImage(1.25);
