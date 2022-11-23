@@ -48,3 +48,5 @@ struct SimResults {
     double g_min;
     double range;
 };
+
+void hsva_to_rgba(double hsva[4], double rgba[4]);
