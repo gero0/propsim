@@ -384,8 +384,8 @@ void MainWindow::draw_grid()
     pixmap = std::make_shared<QPixmap>(QPixmap::fromImage(image));
 
     QPainter painter(pixmap.get());
-    QPen green((QColor(0, 255, 0)), 1);
-    painter.setPen(green);
+    QPen white((QColor(255, 255, 255)), 1);
+    painter.setPen(white);
 
     for (auto wall : walls) {
         painter.drawLine(wall.line.p1.x, wall.line.p1.y, wall.line.p2.x, wall.line.p2.y);
